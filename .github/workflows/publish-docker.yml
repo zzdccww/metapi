@@ -1,0 +1,255 @@
+name: Publish Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker image tag (e.g. v1.3.0, nightly, test-20260507). Required.'
+        required: true
+        type: string
+      push_latest:
+        description: 'Also tag as :latest'
+        required: false
+        type: boolean
+        default: true
+      push_ghcr:
+        description: 'Push to GHCR (ghcr.io)'
+        required: false
+        type: boolean
+        default: true
+      push_dockerhub:
+        description: 'Push to Docker Hub'
+        required: false
+        type: boolean
+        default: false
+      architectures:
+        description: 'Architectures (comma-separated: amd64,arm64,armv7)'
+        required: false
+        type: string
+        default: 'amd64,arm64,armv7'
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/metapi
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      tag: ${{ inputs.tag }}
+      images: ${{ steps.set-images.outputs.images }}
+
+    steps:
+      - name: Validate inputs
+        run: |
+          if [ -z "${{ inputs.tag }}" ]; then
+            echo "::error::Tag cannot be empty"
+            exit 1
+          fi
+          if [ "${{ inputs.push_dockerhub }}" = "true" ]; then
+            if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+              echo "::error::Docker Hub push requested but DOCKERHUB_USERNAME / DOCKERHUB_TOKEN secrets are missing"
+              exit 1
+            fi
+          fi
+
+      - name: Build architecture matrix
+        id: set-matrix
+        run: |
+          selected="${{ inputs.architectures }}"
+          all_archs='[{"arch":"amd64","platform":"linux/amd64","runner":"ubuntu-latest"},{"arch":"arm64","platform":"linux/arm64","runner":"ubuntu-24.04-arm"},{"arch":"armv7","platform":"linux/arm/v7","runner":"ubuntu-latest"}]'
+          matrix_items="["
+          first=true
+          IFS=',' read -ra SELECTED <<< "$selected"
+          for entry in $(echo "$all_archs" | jq -c '.[]'); do
+            arch=$(echo "$entry" | jq -r '.arch')
+            for s in "${SELECTED[@]}"; do
+              s=$(echo "$s" | xargs)
+              if [ "$arch" = "$s" ]; then
+                if [ "$first" = true ]; then first=false; else matrix_items+=","; fi
+                matrix_items+="$entry"
+              fi
+            done
+          done
+          matrix_items+="]"
+          echo "matrix=$matrix_items" >> "$GITHUB_OUTPUT"
+
+      - name: Build image list
+        id: set-images
+        run: |
+          images=""
+          if [ "${{ inputs.push_dockerhub }}" = "true" ]; then
+            images="${{ env.DOCKERHUB_IMAGE }}"
+          fi
+          if [ "${{ inputs.push_ghcr }}" = "true" ]; then
+            if [ -n "$images" ]; then images+=$'\n'; fi
+            images+="ghcr.io/${{ github.repository }}"
+          fi
+          {
+            echo 'images<<EOF'
+            echo "$images"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.arch }})
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Set up QEMU
+        if: matrix.arch == 'armv7'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Login to Docker Hub
+        if: inputs.push_dockerhub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GHCR
+        if: inputs.push_ghcr
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate tags
+        id: tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ needs.prepare.outputs.tag }}"
+          images="${{ needs.prepare.outputs.images }}"
+          all_tags=""
+          while IFS= read -r image; do
+            [ -n "$image" ] || continue
+            if [ -n "$all_tags" ]; then all_tags+=","; fi
+            all_tags+="${image}:${tag}"
+            if [ "${{ inputs.push_latest }}" = "true" ]; then
+              all_tags+=",${image}:latest"
+            fi
+          done <<< "$images"
+          echo "tags=${all_tags}" >> "$GITHUB_OUTPUT"
+
+      - name: Add architecture suffix to tags
+        id: arch-tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f tags.txt
+          IFS=',' read -ra TAG_LIST <<< "${{ steps.tags.outputs.tags }}"
+          for tag in "${TAG_LIST[@]}"; do
+            [ -n "$tag" ] || continue
+            echo "${tag}-${{ matrix.arch }}" >> tags.txt
+          done
+          {
+            echo 'tags<<EOF'
+            cat tags.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push (${{ matrix.platform }})
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ steps.arch-tags.outputs.tags }}
+          cache-from: type=gha,scope=manual-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=manual-${{ matrix.arch }}
+
+  manifest:
+    name: Assemble Multi-arch Manifest
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Login to Docker Hub
+        if: inputs.push_dockerhub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GHCR
+        if: inputs.push_ghcr
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Create multi-arch manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ needs.prepare.outputs.tag }}"
+          images="${{ needs.prepare.outputs.images }}"
+          archs="${{ inputs.architectures }}"
+
+          while IFS= read -r image; do
+            [ -n "$image" ] || continue
+
+            for t in "$tag" latest; do
+              if [ "$t" = "latest" ] && [ "${{ inputs.push_latest }}" != "true" ]; then
+                continue
+              fi
+
+              full_tag="${image}:${t}"
+              sources=""
+              IFS=',' read -ra ARCH_LIST <<< "$archs"
+              for arch in "${ARCH_LIST[@]}"; do
+                arch=$(echo "$arch" | xargs)
+                if [ -n "$sources" ]; then sources+=" "; fi
+                sources+="${full_tag}-${arch}"
+              done
+
+              echo "Creating manifest: ${full_tag}"
+              echo "  Sources: ${sources}"
+              docker buildx imagetools create --tag "$full_tag" $sources
+            done
+          done <<< "$images"
+
+      - name: Verify manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ needs.prepare.outputs.tag }}"
+          images="${{ needs.prepare.outputs.images }}"
+
+          while IFS= read -r image; do
+            [ -n "$image" ] || continue
+            for t in "$tag" latest; do
+              if [ "$t" = "latest" ] && [ "${{ inputs.push_latest }}" != "true" ]; then
+                continue
+              fi
+              full_tag="${image}:${t}"
+              echo "--- ${full_tag} ---"
+              docker buildx imagetools inspect "$full_tag"
+            done
+          done <<< "$images"
