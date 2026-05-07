@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npx tsc *)",
+      "Bash(npx vitest *)",
+      "Bash(npm install *)",
+      "Bash(ls node_modules/.bin/vitest*)",
+      "Bash(ls node_modules/vitest/package.json)",
+      "Bash(./node_modules/.bin/vitest run *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)"
+    ]
+  }
+}
