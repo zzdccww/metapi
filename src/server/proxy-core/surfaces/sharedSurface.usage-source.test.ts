@@ -37,11 +37,11 @@ vi.mock('../../services/proxyRetryPolicy.js', () => ({
   shouldRetryProxyRequest: vi.fn(() => false),
 }));
 
-vi.mock('../../routes/proxy/logPathMeta.js', () => ({
+vi.mock('../../services/proxyLogMessage.js', () => ({
   composeProxyLogMessage: (...args: unknown[]) => composeProxyLogMessageMock(...args),
 }));
 
-vi.mock('../../routes/proxy/proxyBilling.js', () => ({
+vi.mock('../../services/proxyBilling.js', () => ({
   resolveProxyLogBilling: vi.fn(),
 }));
 
@@ -58,6 +58,7 @@ vi.mock('../orchestration/upstreamRequest.js', () => ({
 }));
 
 vi.mock('../../services/oauth/quota.js', () => ({
+  recordOauthQuotaHeadersSnapshot: vi.fn(),
   recordOauthQuotaResetHint: vi.fn(),
 }));
 
