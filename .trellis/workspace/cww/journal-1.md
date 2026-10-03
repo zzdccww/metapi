@@ -27,3 +27,25 @@ Fixed PostgreSQL and MySQL startup crash from column metadata outside the base-t
 ### Status
 
 [OK] **Completed**
+
+
+## Session 2: Node runtime release validation
+<!-- trellis-session: v=2 fp=5097c1cb5b5f43cb -->
+
+**Date**: 2026-10-03
+**Task**: Node runtime release validation
+**Branch**: `fix/schema-introspection-startup-crash`
+
+### Summary
+
+Validated source e69a7a4 in isolated Linux runtimes. Node 25 passed focused 36 tests, core 3156 passed/13 skipped, complete typecheck/build, and drift check. Original Node 22 Docker build is blocked by npm 10 lock validation; npm 11.6.2 on identical Node 22 and manifests passed installation only. Independent evidence review PASS; release readiness BLOCKED. Next: propose Docker builder npm pin and actual image/startup verification. No push, publication, or deployment.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b04b2a3` | docs: record runtime validation constraints |
+
+### Status
+
+[OK] **Completed**
