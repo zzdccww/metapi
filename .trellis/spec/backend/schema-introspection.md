@@ -59,3 +59,15 @@ table.columns[row.column_name] = column;
 ```
 
 Filtering the column SQL alone does not guarantee membership in an earlier inventory snapshot. Keep the local ownership check even if the queries are later tightened.
+
+## Runtime Validation
+
+The repository currently uses Node 25 for development/CI (`.nvmrc`, `package.json`, and `.github/workflows/ci.yml`) and Node 22 in both stages of `docker/Dockerfile`. The Dockerfile documents an intentional ARMv7 compatibility constraint; do not raise its Node major merely to match development. The release workflow still includes `linux/arm/v7`.
+
+- Record the exact source revision, runtime, platform, and check outcomes. Passing on the developer machine alone does not establish either CI-runtime or Linux-container compatibility.
+- Install native dependencies separately for each Node runtime. In particular, a `better-sqlite3` binary built under a different Node ABI is not valid validation evidence.
+- Core CI sets `DB_PARITY_SKIP_LIVE_SCHEMA=true`, but the external-dialect live suites still run when `DB_PARITY_MYSQL_URL` or `DB_PARITY_POSTGRES_URL` is set. Explicitly unset those URLs unless using known isolated test databases.
+- Build and smoke-test release candidates with fresh task-local data. Distinguish local startup success from production recovery and Linux amd64 checks from full multi-architecture validation.
+- On Windows, `git archive` can apply `core.autocrlf` and change exported bytes. For a Linux validation snapshot, use per-command `git -c core.autocrlf=false -c core.eol=lf archive <revision>` and compare exported paths and raw bytes with their Git blobs. Use Linux tar or a Unicode-safe ZIP extractor; Windows tar can mis-extract Unicode filenames. Do not change global Git settings or attribute an export-induced text assertion to product code.
+- If SQLite fixture migrations time out on Docker Desktop, compare the pre-fix revision and a fast temporary filesystem before classifying a regression. Record the chosen `TMPDIR` and preserve the initial failure log rather than silently increasing timeouts.
+- Record npm as well as Node when validating release builds. With the current Vite overrides/lockfile, Node 22.23.3's npm 10.9.9 failed lock validation while npm 11.6.2 on the same Node and exact manifests installed successfully. A package-manager-only diagnostic does not establish native rebuild, image creation, or application startup success.
