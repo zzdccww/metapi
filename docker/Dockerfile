@@ -10,6 +10,9 @@ RUN apt-get update \
 
 ENV PYTHON=/usr/bin/python3
 
+# npm 10 cannot resolve this lockfile's Vite overrides.
+RUN npm install --global npm@11.6.2 --no-audit --no-fund
+
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
 RUN npm rebuild esbuild sharp better-sqlite3 --no-audit --no-fund
