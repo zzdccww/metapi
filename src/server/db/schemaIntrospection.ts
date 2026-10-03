@@ -426,9 +426,13 @@ async function introspectMySqlSchema(input: SchemaIntrospectionInput): Promise<S
       if (!tableName || !columnName || !declaredType) {
         continue;
       }
+      const table = tableMap.get(tableName);
+      if (!table) {
+        continue;
+      }
 
       const logicalType = normalizeSqlType('mysql', declaredType, columnName, columnDefault);
-      tableMap.get(tableName)!.columns[columnName] = {
+      table.columns[columnName] = {
         logicalType,
         notNull: isNullable === 'NO',
         defaultValue: primaryKeys.has(`${tableName}.${columnName}`)
@@ -579,8 +583,12 @@ async function introspectPostgresSchema(input: SchemaIntrospectionInput): Promis
     }
 
     for (const row of columnResult.rows as PostgresColumnRow[]) {
+      const table = tableMap.get(row.table_name);
+      if (!table) {
+        continue;
+      }
       const logicalType = normalizeSqlType('postgres', `${row.data_type} ${row.udt_name}`, row.column_name, row.column_default);
-      tableMap.get(row.table_name)!.columns[row.column_name] = {
+      table.columns[row.column_name] = {
         logicalType,
         notNull: row.is_nullable === 'NO',
         defaultValue: primaryKeys.has(`${row.table_name}.${row.column_name}`)
