@@ -260,14 +260,14 @@ if (existsSync(webDir)) {
     root: webDir,
     prefix: '/',
     wildcard: false,
-    setHeaders: (res, filePath) => {
+    setHeaders: (reply, filePath) => {
       const normalizedPath = normalize(filePath);
       if (normalizedPath.includes(`${sep}assets${sep}`)) {
-        (res as unknown as import('node:http').ServerResponse).setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        reply.header('Cache-Control', 'public, max-age=31536000, immutable');
         return;
       }
       if (normalizedPath.endsWith(`${sep}index.html`)) {
-        (res as unknown as import('node:http').ServerResponse).setHeader('Cache-Control', 'no-cache');
+        reply.header('Cache-Control', 'no-cache');
       }
     },
   });
