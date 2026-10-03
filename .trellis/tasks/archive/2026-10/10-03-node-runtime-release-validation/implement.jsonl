@@ -1,0 +1,3 @@
+{"file":"AGENTS.md","reason":"Repository validation, architecture, and local-planning boundaries."}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"The repaired metadata ownership contract and focused regression requirements."}
+{"file":"docs/plans/node-runtime-release-validation.md","reason":"Runtime matrix evidence, isolation, fallback strategy, commands, and release boundaries."}

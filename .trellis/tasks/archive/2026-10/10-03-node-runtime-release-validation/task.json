@@ -1,0 +1,32 @@
+{
+  "id": "node-runtime-release-validation",
+  "name": "node-runtime-release-validation",
+  "title": "Validate Node runtimes before release",
+  "description": "Verify the schema introspection fix under the declared Node 25 development/CI runtime and the intentional Node 22 Docker runtime before preparing a release.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "cww",
+  "assignee": "cww",
+  "createdAt": "2026-10-03",
+  "completedAt": "2026-10-03",
+  "branch": "fix/schema-introspection-startup-crash",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": "b04b2a35996e3eb5ea1136d193c0fbd191677870",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    ".trellis/spec/backend/schema-introspection.md"
+  ],
+  "notes": "Validation and independent evidence review complete; release readiness BLOCKED. Node 25: focused 36 tests, core 3156 passed/13 skipped, full typecheck/build and drift check passed. Original Node 22 Docker build failed at npm 10 lock validation; app image/startup not reached. Same Node 22 with npm 11.6.2 installed unchanged manifests successfully, an install-only diagnostic. No product/deployment configuration changes, push, publication or deployment. See verification.md and review.md.",
+  "meta": {
+    "validated_revision": "e69a7a44d786412ee7875bd4285bd893438eb38c",
+    "evidence_quality": "PASS",
+    "release_readiness": "BLOCKED"
+  }
+}

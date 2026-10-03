@@ -1,0 +1,3 @@
+{"file":"AGENTS.md","reason":"Check repository scope, preservation of existing configuration, and verification quality."}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"Ensure validation covers the actual startup-crash repair and avoids live production databases."}
+{"file":"docs/plans/node-runtime-release-validation.md","reason":"Audit command evidence, exact runtimes, isolation, fallback limits, and release-readiness conclusion."}
