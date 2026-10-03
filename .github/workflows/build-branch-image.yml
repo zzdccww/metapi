@@ -1,0 +1,55 @@
+name: Build Branch Docker Image
+
+on:
+  push:
+    branches: [metapi-evolution]
+    paths:
+      - 'docker/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'drizzle/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'vite.config.ts'
+      - '.dockerignore'
+      - '.github/workflows/build-branch-image.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: branch-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build linux/amd64 image
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build OCI image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64
+          outputs: type=oci,dest=/tmp/metapi-evolution-linux-amd64.tar
+          cache-from: type=gha,scope=branch-metapi-evolution
+          cache-to: type=gha,mode=max,scope=branch-metapi-evolution
+
+      - name: Upload OCI image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: metapi-evolution-linux-amd64-image
+          path: /tmp/metapi-evolution-linux-amd64.tar
+          if-no-files-found: error
