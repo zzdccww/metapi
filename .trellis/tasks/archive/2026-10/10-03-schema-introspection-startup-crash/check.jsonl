@@ -1,0 +1,3 @@
+{"file":"AGENTS.md","reason":"Check the repair against repository database and shared-boundary rules."}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"Verify base-table ownership, metadata preservation, resource cleanup, and error propagation."}
+{"file":"docs/plans/schema-introspection-startup-crash.md","reason":"Verify public-entry-point regressions, preserved metadata and cleanup, and required checks without production access."}

@@ -1,0 +1,30 @@
+{
+  "id": "schema-introspection-startup-crash",
+  "name": "schema-introspection-startup-crash",
+  "title": "Fix schema introspection startup crash",
+  "description": "Resume Claude session cbedfe23-b9ec-42cd-992c-f2cc28c2bb38; diagnose and fix PostgreSQL/MySQL metadata rows outside the base-table contract.",
+  "status": "completed",
+  "dev_type": "backend",
+  "scope": "database",
+  "package": null,
+  "priority": "P2",
+  "creator": "cww",
+  "assignee": "cww",
+  "createdAt": "2026-10-03",
+  "completedAt": "2026-10-03",
+  "branch": "fix/schema-introspection-startup-crash",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": "53d923d",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "src/server/db/schemaIntrospection.ts",
+    "src/server/db/schemaIntrospection.test.ts",
+    ".trellis/spec/backend/schema-introspection.md"
+  ],
+  "notes": "Local repair and independent review complete: 28 schema tests and 8 runtime tests pass; server typecheck passes; drift-check reports 0 violations. Node 24 is below the declared >=25 engine. No production deployment or recovery verification. See verification.md.",
+  "meta": {}
+}

@@ -1,0 +1,3 @@
+{"file":"AGENTS.md","reason":"Repository database ownership, narrow-change, schema artifact, and architecture guardrails."}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"Executable base-table ownership and query-error contract for schema introspection."}
+{"file":"docs/plans/schema-introspection-startup-crash.md","reason":"Recovered evidence, selected base-table ownership guard, regression cases, and production restrictions."}
