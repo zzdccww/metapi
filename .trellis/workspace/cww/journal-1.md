@@ -123,3 +123,25 @@ Closed encoded management API authentication bypass using Fastify matched route 
 ### Next Steps
 
 - Deploy rebuilt repaired artifact and verify protected plain/encoded routes require authentication.
+
+
+## Session 5: Sync upstream Evolution UI and security patches
+<!-- trellis-session: v=2 fp=5910773584e1db9b -->
+
+**Date**: 2026-10-21
+**Task**: Sync upstream Evolution UI and security patches
+**Branch**: `metapi-evolution`
+
+### Summary
+
+Resumed session 01a15950; merged upstream 674db2e preserving local admin auth/schema and Docker npm pin. Audits zero for root full/production and standalone UI; typecheck/build, 3339 full-suite tests, 155 Evolution tests, 17-page browser smoke, fresh SQLite built-server startup, drift all passed. Fixed Windows test discovery/CRLF/SQLite cleanup and GHCR Evolution source trigger. Docker Linux validation blocked by WSL engine initialization failure. No push or production deployment.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5398f46` | feat: sync upstream Evolution UI and security updates |
+
+### Status
+
+[OK] **Completed**
