@@ -130,6 +130,13 @@ describe('docker workflows', () => {
     expect(dockerfile).toContain('npm prune --omit=dev --no-audit --no-fund');
   });
 
+  it('rebuilds the GHCR branch image when either interface changes', () => {
+    const branchWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/build-branch-image.yml'), 'utf8');
+    expect(branchWorkflow).toContain("- 'src/**'");
+    expect(branchWorkflow).toContain("- 'New metapi Evolution Webui/metapi/**'");
+    expect(branchWorkflow).toContain('platforms: linux/amd64');
+  });
+
   it('forwards Google OAuth variables through hosted deployment templates without defaults', () => {
     const dockerEnvExample = readFileSync(resolve(process.cwd(), 'docker/.env.example'), 'utf8');
     const render = readFileSync(resolve(process.cwd(), 'render.yaml'), 'utf8');
@@ -143,15 +150,15 @@ describe('docker workflows', () => {
 
     for (const variable of oauthVariables) {
       expect(dockerEnvExample, `${variable} should be blank by default`).toMatch(
-        new RegExp(`^${variable}=$`, 'm'),
+        new RegExp(`^${variable}=\\r?$`, 'm'),
       );
-      expect(render, `render.yaml should expose ${variable} as a runtime secret`).toContain(
+      expect(render.replaceAll('\r\n', '\n'), `render.yaml should expose ${variable} as a runtime secret`).toContain(
         `- key: ${variable}\n        sync: false`,
       );
       expect(zeabur, `zeabur-template.yaml should declare ${variable}`).toContain(
         `- key: ${variable}`,
       );
-      expect(zeabur, `zeabur-template.yaml should inject ${variable}`).toContain(
+      expect(zeabur.replaceAll('\r\n', '\n'), `zeabur-template.yaml should inject ${variable}`).toContain(
         `          ${variable}:\n            default: \${${variable}}\n            expose: false`,
       );
     }

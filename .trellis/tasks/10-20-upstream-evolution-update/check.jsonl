@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/management-route-auth.md","reason":"Review encoded route and public/proxy guard regression coverage"}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"Review metadata regression and isolated runtime verification"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Review frontend build, API auth and session data flow"}
+{"file":".trellis/tasks/10-20-upstream-evolution-update/research/integration-baseline.md","reason":"Separate upstream changes from local integration and audit findings"}

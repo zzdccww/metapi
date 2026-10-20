@@ -1,3 +1,5 @@
+import { frontendEntryForPath } from './frontendEntry.js';
+import { setFrontendCacheHeaders } from './staticFrontendCache.js';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
@@ -64,7 +66,7 @@ import { ensureRuntimeDatabaseReady } from './runtimeDatabaseBootstrap.js';
 import { registerDesktopRoutes } from './desktop.js';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
-import { dirname, normalize, resolve, sep } from 'path';
+import { dirname, resolve } from 'path';
 import {
   applyRuntimeSettings,
   parseSettingFromMap,
@@ -246,22 +248,12 @@ if (existsSync(webDir)) {
     root: webDir,
     prefix: '/',
     wildcard: false,
-    setHeaders: (reply, filePath) => {
-      const normalizedPath = normalize(filePath);
-      if (normalizedPath.includes(`${sep}assets${sep}`)) {
-        reply.header('Cache-Control', 'public, max-age=31536000, immutable');
-        return;
-      }
-      if (normalizedPath.endsWith(`${sep}index.html`)) {
-        reply.header('Cache-Control', 'no-cache');
-      }
-    },
+    setHeaders: setFrontendCacheHeaders,
   });
   // SPA fallback
   app.setNotFoundHandler(async (request, reply) => {
-    if (!request.url.startsWith('/api/') && !request.url.startsWith('/v1/')) {
-      return reply.sendFile('index.html');
-    }
+    const entry = frontendEntryForPath(request.url);
+    if (entry) return reply.sendFile(entry);
     reply.code(404).send({ error: 'Not found' });
   });
 }

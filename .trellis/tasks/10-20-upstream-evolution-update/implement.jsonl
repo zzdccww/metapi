@@ -1,0 +1,4 @@
+{"file":".trellis/spec/backend/management-route-auth.md","reason":"Preserve matched-route auth and administrator limiter during upstream integration"}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"Preserve local metadata ownership and runtime validation invariants"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Keep upstream and local implementations unified without compatibility residue"}
+{"file":".trellis/tasks/10-20-upstream-evolution-update/research/integration-baseline.md","reason":"Pinned revision, audit baseline and conflict evidence"}

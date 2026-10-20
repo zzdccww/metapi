@@ -63,6 +63,7 @@ describe('accounts password login user ID persistence', () => {
 
   afterAll(async () => {
     await app.close();
+    await (await import('../../db/index.js')).closeDbConnections();
     if (dataDir) rmSync(dataDir, { recursive: true, force: true });
     delete process.env.DATA_DIR;
   });
