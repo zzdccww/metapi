@@ -1,8 +1,9 @@
 # Upstream Evolution Integration Verification
 
 Verified on 2026-10-21 in `D:/metapi/metapi-evolution`, Windows x64, task-local
-Node v25.0.0 and npm 11.8.0. Source is the pending merge of local `67326f4` and
-upstream `674db2e`, with the fixes described below. No remote push or production
+Node v25.0.0 and npm 11.8.0. Source is the verified merge of local `67326f4` and
+upstream `674db2e`, committed as `5398f4647060e7412286e81c3b25732eb73dbb13`.
+No remote push or production
 deployment occurred.
 
 ## Delivered Behavior
@@ -97,3 +98,8 @@ Code checks are complete. Local commits are authorized without additional
 confirmation by the user-provided AGENTS.md section 9.1; this takes precedence
 over the skill's generic commit confirmation step. Remote push and production
 deployment remain outside this task's authorization.
+
+Both parents are ancestors of the committed result. Integration whitespace
+validation relative to the pinned upstream passed; inherited upstream Markdown
+hard breaks and whitespace were retained. Unrelated local tool scaffolding and
+historical validation snapshots were excluded from the work commit.

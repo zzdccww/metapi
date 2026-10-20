@@ -21,14 +21,14 @@ Bring the local deployment source up to the reviewed upstream revision, remove k
 
 ## Acceptance Criteria
 
-- [ ] The upstream revision and baseline local revision are both retained in the integrated history.
+- [x] The upstream revision and baseline local revision are both retained in merge commit `5398f46`.
 - [x] Encoded management routes enforce credentials and the shared administrator limiter; public/proxy controls retain their behavior.
 - [x] Schema introspection skips metadata without base-table owners and preserves valid table metadata.
 - [x] The built interface serves Evolution at `/` and the reference interface at `/legacy/`; browser fixture checks cover core interaction and session paths.
 - [x] Dependency audits have no unresolved findings; root complete/production and standalone frontend audits are zero.
 - [x] Applicable type checking, build, regression tests and drift checks pass; environmental skips are distinguished from passing tests.
 - [x] Existing Docker npm pin and GHCR workflow remain functional source configuration, with the new frontend source trigger added.
-- [ ] Changes, validation, runtime limitations and rollback reference are recorded and locally committed.
+- [x] Changes, validation, runtime limitations and rollback reference are recorded and locally committed.
 
 ## Out of Scope
 

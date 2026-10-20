@@ -9,7 +9,7 @@
 - [x] Run focused regressions, full source tests, type checking, build, Evolution tests and drift check.
 - [x] Run fixture browser smoke and built-server fresh SQLite startup smoke. Docker build/startup blocked by WSL initialization failure; recorded in verification.md.
 - [x] Attempt Trellis dispatch; model unavailable. Complete full-scope main-session review and fix findings; record fallback in review.md and verification.md.
-- [ ] Record verification, update useful spec contracts, locally commit the merge and integration fixes, archive task and record session.
+- [x] Record verification, update useful spec contracts and locally commit the merge and integration fixes as `5398f46`; proceed to task archival and session recording.
 
 ## Commands and Gates
 
