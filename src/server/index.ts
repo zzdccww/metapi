@@ -5,8 +5,7 @@ import {
   buildFastifyOptions,
   config,
 } from './config.js';
-import { authMiddleware } from './middleware/auth.js';
-import { createRateLimitGuard } from './middleware/requestRateLimit.js';
+import { registerAdminRouteGuard } from './middleware/adminRouteGuard.js';
 import { createGlobalRateLimitHook, registerGlobalRateLimit } from './middleware/globalRateLimit.js';
 import { registerRetiredMonitorRouteGuard } from './retiredMonitorRouteGuard.js';
 import { sitesRoutes } from './routes/api/sites.js';
@@ -62,7 +61,7 @@ import {
 } from './services/usageAggregationService.js';
 import { reloadBackupWebdavScheduler } from './services/backupService.js';
 import { ensureRuntimeDatabaseReady } from './runtimeDatabaseBootstrap.js';
-import { isPublicApiRoute, registerDesktopRoutes } from './desktop.js';
+import { registerDesktopRoutes } from './desktop.js';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, normalize, resolve, sep } from 'path';
@@ -209,26 +208,13 @@ await registerGlobalRateLimit(app, {
   windowMs: config.requestRateLimitWindowMs,
 });
 
-const limitAuthenticatedAdmin = createRateLimitGuard({
-  bucket: 'admin-authenticated',
-  max: config.authenticatedRateLimitMax,
-  windowMs: config.requestRateLimitWindowMs,
-  keyGenerator: () => 'admin',
-});
-
 await app.register(cors);
 app.addHook('onRequest', createGlobalRateLimitHook(app));
 
 // Deny retired monitor endpoints before auth and SPA fallback can handle them.
 registerRetiredMonitorRouteGuard(app);
 
-// Auth middleware for /api routes
-app.addHook('onRequest', async (request, reply) => {
-  if (request.url.startsWith('/api/') && !isPublicApiRoute(request.url)) {
-    await authMiddleware(request, reply);
-    if (!reply.sent) await limitAuthenticatedAdmin(request, reply);
-  }
-});
+registerAdminRouteGuard(app);
 
 // Register API routes
 await app.register(registerDesktopRoutes);

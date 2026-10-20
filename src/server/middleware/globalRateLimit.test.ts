@@ -5,7 +5,7 @@ import cors from '@fastify/cors';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGlobalRateLimitHook, registerGlobalRateLimit } from './globalRateLimit.js';
 import { registerRetiredMonitorRouteGuard } from '../retiredMonitorRouteGuard.js';
-import { createRateLimitGuard, resetRequestRateLimitStore } from './requestRateLimit.js';
+import { resetRequestRateLimitStore } from './requestRateLimit.js';
 
 describe('global Fastify rate limit', () => {
   let app: FastifyInstance | undefined;
@@ -195,10 +195,8 @@ describe('global Fastify rate limit', () => {
   it('applies the global bucket before invalid admin authentication', async () => {
     app = Fastify();
     await installRootGlobalLimit(1);
-    const { authMiddleware } = await import('./auth.js');
-    app.addHook('onRequest', async (request, reply) => {
-      if (request.url.startsWith('/api/')) await authMiddleware(request, reply);
-    });
+    const { registerAdminRouteGuard } = await import('./adminRouteGuard.js');
+    registerAdminRouteGuard(app);
     app.get('/api/protected', async () => ({ ok: true }));
 
     const first = await app.inject({
@@ -220,23 +218,17 @@ describe('global Fastify rate limit', () => {
   it('does not count rejected admin authentication in the authenticated bucket', async () => {
     app = Fastify();
     await installRootGlobalLimit(10);
-    const { authMiddleware } = await import('./auth.js');
+    const { registerAdminRouteGuard } = await import('./adminRouteGuard.js');
     const { config } = await import('../config.js');
     const originalAuthToken = config.authToken;
     const originalAdminIpAllowlist = config.adminIpAllowlist;
+    const originalAuthenticatedMax = config.authenticatedRateLimitMax;
+    const originalWindowMs = config.requestRateLimitWindowMs;
     config.authToken = 'valid-admin-token';
     config.adminIpAllowlist = [];
-    const limitAdmin = createRateLimitGuard({
-      bucket: 'admin-authenticated-lifecycle-test',
-      max: 1,
-      windowMs: 60_000,
-      keyGenerator: () => 'admin',
-    });
-    app.addHook('onRequest', async (request, reply) => {
-      if (!request.url.startsWith('/api/')) return;
-      await authMiddleware(request, reply);
-      if (!reply.sent) await limitAdmin(request, reply);
-    });
+    config.authenticatedRateLimitMax = 1;
+    config.requestRateLimitWindowMs = 60_000;
+    registerAdminRouteGuard(app);
     app.get('/api/protected', async () => ({ ok: true }));
 
     try {
@@ -262,6 +254,8 @@ describe('global Fastify rate limit', () => {
     } finally {
       config.authToken = originalAuthToken;
       config.adminIpAllowlist = originalAdminIpAllowlist;
+      config.authenticatedRateLimitMax = originalAuthenticatedMax;
+      config.requestRateLimitWindowMs = originalWindowMs;
     }
   });
 
@@ -288,13 +282,17 @@ describe('global Fastify rate limit', () => {
     const corsRegistration = indexSource.indexOf('await app.register(cors);');
     const rootHook = indexSource.indexOf('createGlobalRateLimitHook(app)');
     const retiredGuard = indexSource.indexOf('registerRetiredMonitorRouteGuard(app);');
-    const adminAuth = indexSource.indexOf('await authMiddleware(request, reply);');
+    const adminGuard = indexSource.indexOf('registerAdminRouteGuard(app);');
+    const apiRegistration = indexSource.indexOf('await app.register(registerDesktopRoutes);');
 
     expect(pluginRegistration).toBeGreaterThanOrEqual(0);
     expect(pluginRegistration).toBeLessThan(corsRegistration);
     expect(corsRegistration).toBeLessThan(rootHook);
     expect(rootHook).toBeLessThan(retiredGuard);
-    expect(retiredGuard).toBeLessThan(adminAuth);
+    expect(adminGuard).toBeGreaterThanOrEqual(0);
+    expect(retiredGuard).toBeLessThan(adminGuard);
+    expect(apiRegistration).toBeGreaterThanOrEqual(0);
+    expect(adminGuard).toBeLessThan(apiRegistration);
     expect(routerSource).toContain("app.addHook('onRequest', createProxyAuthRateLimitHook({");
   });
 
