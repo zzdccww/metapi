@@ -1,0 +1,4 @@
+{"file":"AGENTS.md","reason":"Repository ownership rules, narrow changes, architecture guardrails, and UTF-8 policy."}
+{"file":".trellis/spec/backend/index.md","reason":"Backend spec index; remaining placeholder specs do not invent project conventions."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"One shared guard and public predicate used by production and regression fixtures."}
+{"file":".trellis/tasks/10-20-admin-route-auth-bypass/research/route-auth.md","reason":"Source anchors, existing test wiring, historical candidate proof, and validation constraints."}

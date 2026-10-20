@@ -1,0 +1,4 @@
+{"file":"AGENTS.md","reason":"Review narrow scope, one source of truth, and required architecture checks."}
+{"file":".trellis/spec/backend/index.md","reason":"Discover applicable backend guidance."}
+{"file":".trellis/spec/backend/management-route-auth.md","reason":"Verify matched-route identity, auth/IP errors, public exceptions, and once-only administrator limit contract."}
+{"file":".trellis/tasks/10-20-admin-route-auth-bypass/research/route-auth.md","reason":"Validate production-path coverage, public/proxy controls, and preservation of limiter semantics."}
