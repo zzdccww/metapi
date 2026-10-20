@@ -89,3 +89,37 @@ Published the linux/amd64 image through GitHub Actions and confirmed new-pod fro
 ### Next Steps
 
 - Local Docker prune delays remain unresolved; ARM64/ARMv7, proxy upstream paths, and extended stability remain outside this evidence. Bootstrap task remains active.
+
+
+## Session 4: Fix Issue 629 management authentication bypass
+<!-- trellis-session: v=2 fp=3f69a3c20b7c13fa -->
+
+**Date**: 2026-10-20
+**Task**: Fix Issue 629 management authentication bypass
+**Branch**: `metapi-evolution`
+
+### Summary
+
+Closed encoded management API authentication bypass using Fastify matched route identity. Verified 8 focused suites with 100 tests, server type-check/build, zero drift violations, and independent review. Local fix only; deployment remains required.
+
+### Main Changes
+
+- Shared production administrator guard preserves IP/token policy, public routes, and limiter accounting.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4422852` | fix: guard encoded management routes with matched route identity |
+
+### Testing
+
+- [OK] 100 focused tests plus independent 59-test rerun; type-check/build/drift passed; old-classifier negative control failed as expected.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- Deploy rebuilt repaired artifact and verify protected plain/encoded routes require authentication.
