@@ -1,0 +1,5 @@
+{"file":".trellis/tasks/10-21-upstream-evolution-rollback/research/rollback-boundaries.md","reason":"Review exact rollback scope, original-page preservation, security dependency retention, and release limitations."}
+{"file":".trellis/spec/backend/management-route-auth.md","reason":"Verify no authentication, forwarded-IP, token/session, encoded-route, or hydration regression."}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"Verify unchanged schema/data ownership and honest runtime/container validation evidence."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Review complete single-UI delivery, redirect/session contracts, lockfiles, workflow, and documented behavior."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Check shared ownership and absence of leftover Evolution build/discovery paths or duplicate helpers."}

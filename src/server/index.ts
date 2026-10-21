@@ -1,4 +1,4 @@
-import { frontendEntryForPath } from './frontendEntry.js';
+import { frontendEntryForPath, frontendRedirectForPath } from './frontendEntry.js';
 import { setFrontendCacheHeaders } from './staticFrontendCache.js';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -255,6 +255,8 @@ if (existsSync(webDir)) {
   });
   // SPA fallback
   app.setNotFoundHandler(async (request, reply) => {
+    const destination = frontendRedirectForPath(request.url);
+    if (destination) return reply.header('Cache-Control', 'no-cache').redirect(destination, 302);
     const entry = frontendEntryForPath(request.url);
     if (entry) return reply.sendFile(entry);
     reply.code(404).send({ error: 'Not found' });

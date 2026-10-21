@@ -1,6 +1,5 @@
 import { resolve } from 'node:path';
 import { configDefaults, defineConfig } from 'vitest/config';
-import { evolutionTestFiles } from './scripts/dev/evolutionTestFiles';
 
 export default defineConfig({
   resolve: {
@@ -14,7 +13,6 @@ export default defineConfig({
   test: {
     exclude: [
       ...configDefaults.exclude,
-      ...evolutionTestFiles(process.cwd()).node,
       '.codex/**',
       'docs/plans/**',
       '.worktrees/**',

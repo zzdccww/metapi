@@ -1,8 +1,7 @@
 const AUTH_TOKEN_STORAGE_KEY = 'auth_token';
 const AUTH_TOKEN_EXPIRES_AT_STORAGE_KEY = 'auth_token_expires_at';
-// The Evolution shell keeps its own pair of keys. The two interfaces share one
-// backend and one administrator token, so a session established in either shell
-// must authenticate the other without copying the credential between stores.
+// Keep valid sessions from the retired Evolution interface during the transition
+// back to the original UI. Both key pairs still represent the same admin token.
 const EVOLUTION_AUTH_TOKEN_STORAGE_KEY = 'metapi-auth-token';
 const EVOLUTION_AUTH_EXPIRES_AT_STORAGE_KEY = 'metapi-auth-expires-at';
 export const AUTH_SESSION_DURATION_MS = 12 * 60 * 60 * 1000;
@@ -80,7 +79,7 @@ export function getAuthToken(storage?: StorageLike | null, nowMs = Date.now()): 
 
   if (!expiresAtRaw) {
     // First read of a session stored without a deadline: apply the standard
-    // lifetime once, in whichever shell's own keys hold it.
+    // lifetime once, in the keys that originally held it.
     store.setItem(expiresKey, String(nowMs + Math.max(1, Math.trunc(AUTH_SESSION_DURATION_MS))));
     return token;
   }

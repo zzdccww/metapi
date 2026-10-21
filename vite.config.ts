@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -14,17 +13,11 @@ export default defineConfig(({ mode }) => {
   const resolvedFrontendPort = Number.isFinite(frontendPort) && frontendPort > 0 ? frontendPort : 5173;
   const frontendHost = (env.VITE_DEV_HOST || '127.0.0.1').trim() || '127.0.0.1';
 
-  const legacy = process.env.METAPI_WEB_UI === 'legacy';
   return {
-    root: legacy ? 'src/web' : 'New metapi Evolution Webui/metapi',
-    base: legacy ? '/legacy/' : '/',
+    root: 'src/web',
+    base: '/',
     publicDir: resolve('src/web/public'),
-    plugins: [react(), tailwindcss(), {
-      name: 'evolution-favicon',
-      generateBundle() {
-        if (!legacy) this.emitFile({ type: 'asset', fileName: 'favicon.svg', source: readFileSync(resolve('New metapi Evolution Webui/metapi/public/favicon.svg')) });
-      },
-    }],
+    plugins: [react(), tailwindcss()],
     resolve: {
       dedupe: ['react', 'react-dom', 'react-router-dom'],
       alias: {
@@ -34,7 +27,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: resolve(legacy ? 'dist/web/legacy' : 'dist/web'),
+      outDir: resolve('dist/web'),
       emptyOutDir: true,
       rollupOptions: {
         output: {

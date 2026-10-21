@@ -16,8 +16,8 @@
 <a href="https://github.com/yswlww/metapi-evolution/stargazers">
   <img alt="Stars" src="https://img.shields.io/github/stars/yswlww/metapi-evolution?style=flat&logo=github&label=Stars">
 </a>
-<a href="https://hub.docker.com/r/kennethww/metapi-evolution">
-  <img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/kennethww/metapi-evolution?style=flat&logo=docker&label=Docker%20Pulls">
+<a href="https://github.com/zzdccww/metapi/pkgs/container/metapi">
+  <img alt="Container Image" src="https://img.shields.io/badge/GHCR-metapi-blue?style=flat&logo=docker">
 </a>
 <a href="https://github.com/yswlww/metapi-evolution/actions/workflows/ci.yml">
   <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/yswlww/metapi-evolution/ci.yml?branch=main&label=CI&logo=github&style=flat">
@@ -82,21 +82,14 @@
 
 ## 🖥️ 界面
 
-现在，**Metapi Evolution 界面（默认）** 与旧版参考界面同时打包在同一个镜像里，共用同一套后端与同一份管理员登录状态：
+本分支恢复更新前的管理界面，保留原有页面、编辑、筛选和批量操作，以及后续安全修复。
 
 | 路径 | 界面 | 说明 |
 | --- | --- | --- |
-| `/` | **Metapi Evolution**（默认） | 深色三语言（简中 / 繁中 / English）界面，页面按需加载，覆盖全部管理功能 |
-| `/legacy/` | 旧版参考界面 | 与旧版本完全一致，便于比对与回退 |
+| `/` | 原有管理界面 | 站点、账号、令牌、路由、设置等完整管理流程 |
+| `/legacy/`、已有 `/app/` 书签 | 跳转到原有页面 | 保留查询参数及有效管理员会话 |
 
-在默认界面左下角点击「旧版参照界面」即可切换过去；在旧版直接访问 `/` 即可回到新版，**无需重新登录**。
-
-新版界面在旧版基础上补齐了这些能力：
-
-- **真实流程**：OAuth 授权会保留会话并引导完成 consent；通知配置、备份与更新中心均真实写入并可重载确认
-- **契约修复**：路由策略、模型成功率与定价、公告正文与已读状态、日志事件分类等全部对齐后端契约，不再展示占位数据
-- **管理能力**：账号 / 令牌的完整编辑与批量操作、站点排序与代理、下游密钥的权限清空与移动端批量选择
-- **可访问性**：语义化标签、原生表单控件、键盘操作与 `prefers-color-scheme` 主题跟随
+镜像只构建原有界面。使用升级期间保存的有效会话可继续登录；数据、代理接口和安全依赖补丁保留。
 
 <details>
 <summary><strong>📊 界面预览（点击展开）</strong></summary>
@@ -185,7 +178,7 @@ mkdir metapi && cd metapi
 cat > docker-compose.yml << 'EOF'
 services:
   metapi:
-    image: kennethww/metapi-evolution:latest
+    image: ghcr.io/zzdccww/metapi:metapi-evolution
     ports:
       - "127.0.0.1:${PORT:-4000}:${PORT:-4000}"
     volumes:
@@ -235,7 +228,7 @@ docker run -d --name metapi \
   -e TZ=Asia/Shanghai \
   -v ./data:/app/data \
   --restart unless-stopped \
-  kennethww/metapi-evolution:latest
+  ghcr.io/zzdccww/metapi:metapi-evolution
 ```
 
 </details>
@@ -244,14 +237,14 @@ docker run -d --name metapi \
 
 ### 界面说明
 
-镜像同时包含两套界面，开箱无需切换：
+镜像默认提供恢复后的原有界面：
 
 | 路径 | 界面 |
 | --- | --- |
-| `/` | **Metapi Evolution 新界面（默认）** — 深色三语言界面，页面按需加载 |
-| `/legacy/` | 旧版参考界面 — 与新界面共用同一后端与同一管理员登录状态 |
+| `/` | 原有管理界面 |
+| `/legacy/`、已有 `/app/` 书签 | 自动跳转到对应原有页面 |
 
-两套界面可随时互相切换：在新界面左下角点击「旧版参照界面」，或直接访问 `/legacy/`。登录状态互通，无需分别登录。
+账号、令牌、设置和有效登录会话保留。依赖安全补丁及管理员鉴权修复继续生效。
 
 > [!NOTE]
 > Docker 镜像支持 `amd64`、`arm64` 和 `armv7l`（`linux/arm/v7`）服务端部署。

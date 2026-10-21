@@ -132,11 +132,15 @@ describe('docker workflows', () => {
     expect(dockerfile).toContain('npm prune --omit=dev --no-audit --no-fund');
   });
 
-  it('rebuilds the GHCR branch image when either interface changes', () => {
+  it('rebuilds the GHCR branch image when the shipped interface changes', () => {
     const branchWorkflow = readFileSync(resolve(process.cwd(), '.github/workflows/build-branch-image.yml'), 'utf8');
     expect(branchWorkflow).toContain("- 'src/**'");
-    expect(branchWorkflow).toContain("- 'New metapi Evolution Webui/metapi/**'");
+    expect(branchWorkflow).not.toContain("- 'New metapi Evolution Webui/metapi/**'");
     expect(branchWorkflow).toContain('platforms: linux/amd64');
+  });
+
+  it('deploys this repository branch image in the bundled compose file', () => {
+    expect(composeSources[0][1]).toContain('image: ghcr.io/zzdccww/metapi:metapi-evolution');
   });
 
   it('exposes explicit proxy trust in hosted deployment templates', () => {

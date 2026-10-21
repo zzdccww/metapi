@@ -1,6 +1,6 @@
 services:
   metapi:
-    image: kennethww/metapi-evolution:latest
+    image: ghcr.io/zzdccww/metapi:metapi-evolution
     ports:
       - "127.0.0.1:${PORT:-4000}:${PORT:-4000}"
     volumes:

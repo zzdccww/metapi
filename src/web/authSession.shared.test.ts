@@ -11,8 +11,8 @@ function memoryStorage(entries: Record<string, string> = {}) {
   };
 }
 
-describe('shared administration session storage', () => {
-  it('keeps the legacy session authoritative when both shells have stored credentials', () => {
+describe('administration session migration', () => {
+  it('keeps the original UI session authoritative when both versions stored credentials', () => {
     const storage = memoryStorage({
       auth_token: 'legacy-token',
       auth_token_expires_at: String(1_000 + AUTH_SESSION_DURATION_MS),
@@ -22,7 +22,7 @@ describe('shared administration session storage', () => {
     expect(getAuthToken(storage, 1_000)).toBe('legacy-token');
   });
 
-  it('authenticates the new shell from the legacy session without copying the token', () => {
+  it('continues an original UI session without copying the token', () => {
     const storage = memoryStorage({
       auth_token: 'legacy-token',
       auth_token_expires_at: String(1_000 + AUTH_SESSION_DURATION_MS),
@@ -32,7 +32,7 @@ describe('shared administration session storage', () => {
     expect(hasValidAuthSession(storage, 1_000)).toBe(true);
   });
 
-  it('lets the new shell session stand in when no legacy session exists', () => {
+  it('continues a retired UI session when no original UI session exists', () => {
     const storage = memoryStorage({
       'metapi-auth-token': 'new-shell-token',
       'metapi-auth-expires-at': String(1_000 + AUTH_SESSION_DURATION_MS),
@@ -40,7 +40,7 @@ describe('shared administration session storage', () => {
     expect(getAuthToken(storage, 1_000)).toBe('new-shell-token');
   });
 
-  it('expires the new shell session instead of adopting it past its deadline', () => {
+  it('expires a retired UI session instead of adopting it past its deadline', () => {
     const storage = memoryStorage({
       'metapi-auth-token': 'new-shell-token',
       'metapi-auth-expires-at': String(1_000),
@@ -51,7 +51,7 @@ describe('shared administration session storage', () => {
     expect(hasValidAuthSession(storage, 1_001)).toBe(false);
   });
 
-  it('clears both shells when the shared session is invalidated', () => {
+  it('clears both versions of session keys when invalidated', () => {
     const storage = memoryStorage({
       auth_token: 'legacy-token',
       auth_token_expires_at: '9999999999999',
@@ -65,7 +65,7 @@ describe('shared administration session storage', () => {
     expect(storage.getItem('metapi-auth-expires-at')).toBeNull();
   });
 
-  it('writes only legacy keys when a shell persists a new session', () => {
+  it('writes only original UI keys when persisting a new session', () => {
     const storage = memoryStorage();
     persistAuthSession(storage, ' issued-token ', AUTH_SESSION_DURATION_MS, 1_000);
     expect(storage.getItem('auth_token')).toBe('issued-token');
@@ -73,7 +73,7 @@ describe('shared administration session storage', () => {
     expect(storage.getItem('metapi-auth-token')).toBeNull();
   });
 
-  it('adopts an unmarked new shell session with the standard twelve-hour lifetime exactly once', () => {
+  it('adopts an unmarked retired UI session with the standard twelve-hour lifetime exactly once', () => {
     const storage = memoryStorage({ 'metapi-auth-token': 'unmarked-token' });
     expect(getAuthToken(storage, 1_000)).toBe('unmarked-token');
     expect(Number(storage.getItem('metapi-auth-expires-at'))).toBe(1_000 + AUTH_SESSION_DURATION_MS);

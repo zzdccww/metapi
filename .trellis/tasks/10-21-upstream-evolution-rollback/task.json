@@ -1,0 +1,28 @@
+{
+  "id": "upstream-evolution-rollback",
+  "name": "upstream-evolution-rollback",
+  "title": "Rollback incomplete Evolution upstream update",
+  "description": "Restore the pre-update UI and behavior while preserving independent administrator security fixes and existing data.",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "cww",
+  "assignee": "cww",
+  "createdAt": "2026-10-21",
+  "completedAt": null,
+  "branch": "metapi-evolution",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "check_passed": "true"
+  }
+}

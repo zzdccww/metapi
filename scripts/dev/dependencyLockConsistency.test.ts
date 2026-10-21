@@ -7,7 +7,6 @@ import { dirname, join, resolve } from 'node:path';
 const repoRoot = resolve(import.meta.dirname, '../..');
 const manifests = [
   ['package.json', 'package-lock.json'],
-  ['New metapi Evolution Webui/metapi/package.json', 'New metapi Evolution Webui/metapi/package-lock.json'],
 ] as const;
 
 /**

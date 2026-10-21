@@ -23,7 +23,7 @@ const floors: Record<string, (version: string) => string> = {
 };
 
 describe('dependency security floors', () => {
-  it.each(['package-lock.json', 'New metapi Evolution Webui/metapi/package-lock.json'])(
+  it.each(['package-lock.json'])(
     'locks every direct and nested vulnerable package above its patched floor in %s', async (path) => {
     const lockfile = JSON.parse(await readFile(new URL(`../../../${path}`, import.meta.url), 'utf8')) as PackageLock;
     const violations: string[] = [];

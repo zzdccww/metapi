@@ -1,0 +1,5 @@
+{"file":".trellis/tasks/10-21-upstream-evolution-rollback/research/rollback-boundaries.md","reason":"Pinned first-parent baseline, retained security changes, original UI/build boundaries, and deployment evidence."}
+{"file":".trellis/spec/backend/management-route-auth.md","reason":"Preserve matched-route guards, trusted proxy/IP identity, strict credentials, token hydration, and startup invariants."}
+{"file":".trellis/spec/backend/schema-introspection.md","reason":"Preserve database ownership and runtime contracts; isolate fixtures and retain Node 22 Docker/npm constraints."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Keep Vite output, server URL/cache decisions, browser session transition, manifests, and documentation consistent."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Extend existing frontend delivery and session owners; avoid a parallel URL/auth implementation."}
