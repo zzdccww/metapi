@@ -145,3 +145,25 @@ Resumed session 01a15950; merged upstream 674db2e preserving local admin auth/sc
 ### Status
 
 [OK] **Completed**
+
+
+## Session 6: Administrator authentication hardening
+<!-- trellis-session: v=2 fp=b622390003fdf77f -->
+
+**Date**: 2026-10-21
+**Task**: Administrator authentication hardening
+**Branch**: `metapi-evolution`
+
+### Summary
+
+Fixed spoofable admin IP trust, strict Bearer and timing-safe tokens, effective credential startup policy, and encoded retired routes. Full suite: 3421 passed, 14 skipped; full typecheck/build, 8 isolated startup scenarios, drift 0. Verification: .trellis/tasks/archive/2026-10/10-21-admin-auth-hardening/verification.md. Unsupported inherited sub-agent model required main-session fallback. Archive auto-stage old untracked path failed; exact archive directory was committed manually. No push/deployment; Linux container validation unavailable.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `63eba8c` | fix: harden administrator IP and token validation |
+
+### Status
+
+[OK] **Completed**
