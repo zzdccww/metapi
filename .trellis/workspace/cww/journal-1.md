@@ -167,3 +167,37 @@ Fixed spoofable admin IP trust, strict Bearer and timing-safe tokens, effective 
 ### Status
 
 [OK] **Completed**
+
+
+## Session 7: Restore original UI and retain security repairs
+<!-- trellis-session: v=2 fp=e518c4daefb58b91 -->
+
+**Date**: 2026-10-21
+**Task**: Restore original UI and retain security repairs
+**Branch**: `metapi-evolution`
+
+### Summary
+
+Recovered session 01a15b96 and completed the approved rollback of incomplete Evolution UI; retained security patches, data and sessions. Full tests/types/build/browser/startup/audits passed; local Docker unavailable; no push or production change.
+
+### Main Changes
+
+- Restored original src/web at root; removed Evolution build/source family and added safe bookmark/session transitions.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `64e2f47` | fix: restore original UI while retaining security repairs |
+
+### Testing
+
+- [OK] 3368 tests passed, 14 environment skips; typecheck/build, 70 final focused tests, browser and saved-token startup smoke, audits zero, lock validation and drift passed.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- After authorization, push rollback, verify Linux image and deploy to Northflank; production still runs integrated UI.
