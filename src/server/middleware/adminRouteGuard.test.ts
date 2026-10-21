@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { config } from '../config.js';
+import { buildConfig, buildFastifyOptions, config } from '../config.js';
 import { registerDesktopRoutes } from '../desktop.js';
 import { registerAdminRouteGuard } from './adminRouteGuard.js';
 import { proxyAuthMiddleware } from './auth.js';
@@ -104,6 +104,34 @@ describe('production management route guard', () => {
     expect(accepted.statusCode).toBe(200);
     expect(accepted.body).toBe('');
     expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['Bearer wrong', ADMIN_TOKEN, `Basic ${ADMIN_TOKEN}`, `prefixBearer ${ADMIN_TOKEN}`, 'Bearer ', `Bearer ${ADMIN_TOKEN},other`])
+    ('rejects incorrect or malformed administrator credential %s', async (authorization) => {
+      const { server, handler } = buildProtectedApp();
+      const response = await server.inject({ url: '/%61pi/protected', headers: { authorization } });
+      expect(response.statusCode).toBe(403);
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+  it.each([
+    { proxies: '', peer: '127.0.0.1', forwarded: '198.51.100.7', status: 403 },
+    { proxies: '10.0.0.8', peer: '127.0.0.1', forwarded: '198.51.100.7', status: 403 },
+    { proxies: '10.0.0.8', peer: '10.0.0.8', forwarded: '198.51.100.7', status: 200 },
+    { proxies: '10.0.0.8', peer: '10.0.0.8', forwarded: '198.51.100.7, 203.0.113.5', status: 403 },
+    { proxies: '10.0.0.0/24', peer: '10.0.0.8', forwarded: '198.51.100.7, 10.0.0.9', status: 200 },
+    { proxies: '10.0.0.0/24', peer: '10.0.0.8', forwarded: '198.51.100.7, 192.0.2.9', status: 403 },
+    { proxies: '2001:db8::/64', peer: '2001:db8::8', forwarded: '198.51.100.7', status: 200 },
+  ])('uses the declared proxy chain for $peer with $forwarded', async ({ proxies, peer, forwarded, status }) => {
+    config.adminIpAllowlist = ['198.51.100.7'];
+    app = Fastify({ ...buildFastifyOptions(buildConfig({ TRUSTED_PROXY_IPS: proxies })), logger: false });
+    registerAdminRouteGuard(app);
+    const handler = vi.fn(async () => ({ ok: true }));
+    app.get('/api/protected', handler);
+    const response = await app.inject({ url: '/%61pi/protected', remoteAddress: peer,
+      headers: { ...adminHeaders, 'x-forwarded-for': forwarded } });
+    expect(response.statusCode).toBe(status);
+    expect(handler).toHaveBeenCalledTimes(status === 200 ? 1 : 0);
   });
 
   it.each([

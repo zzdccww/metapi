@@ -259,8 +259,8 @@ describe('buildConfig', () => {
     });
   });
 
-  it('trusts forwarded client IP headers for reverse-proxy deployments', async () => {
-    const app = Fastify(buildFastifyOptions(buildConfig({})));
+  it('trusts forwarded client IP headers only for declared reverse proxies', async () => {
+    const app = Fastify(buildFastifyOptions(buildConfig({ TRUSTED_PROXY_IPS: '10.0.0.8' })));
 
     app.get('/ip', async (request) => ({
       ip: request.ip,
@@ -278,5 +278,45 @@ describe('buildConfig', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ ip: '203.0.113.5' });
     await app.close();
+  });
+
+  it('defaults to rejecting forwarding headers from direct clients', async () => {
+    const options = buildFastifyOptions(buildConfig({}));
+    expect(options.trustProxy).toBe(false);
+    const app = Fastify(options);
+    app.get('/ip', async (request) => ({ ip: request.ip }));
+    try {
+      const response = await app.inject({ url: '/ip', headers: { 'x-forwarded-for': '198.51.100.7' } });
+      expect(response.json()).toEqual({ ip: '127.0.0.1' });
+    } finally { await app.close(); }
+  });
+
+  it('accepts trimmed and deduplicated literal proxy addresses and CIDRs', () => {
+    expect(buildConfig({ TRUSTED_PROXY_IPS: ' 10.0.0.8,10.0.0.8,192.0.2.0/24,2001:db8::/64,::1 ' }).trustedProxyIps)
+      .toEqual(['10.0.0.8', '192.0.2.0/24', '2001:db8::/64', '::1']);
+    expect(buildConfig({ TRUSTED_PROXY_IPS: '  ' }).trustedProxyIps).toEqual([]);
+    expect(buildConfig({ AUTH_TOKEN: '' }).authToken).toBe('');
+  });
+
+  it.each([
+    ['192.0.2.0/24', '192.0.2.8'],
+    ['192.0.2.8/32', '192.0.2.8'],
+    ['2001:db8::/64', '2001:db8::8'],
+    ['2001:db8::8/128', '2001:db8::8'],
+    ['::ffff:192.0.2.0/120', '192.0.2.8'],
+    ['::ffff:192.0.2.8/128', '::ffff:192.0.2.8'],
+  ])('resolves clients with Fastify for trusted CIDR %s', async (trustedProxy, peer) => {
+    const app = Fastify(buildFastifyOptions(buildConfig({ TRUSTED_PROXY_IPS: trustedProxy })));
+    app.get('/ip', async (request) => ({ ip: request.ip }));
+    try {
+      const response = await app.inject({ url: '/ip', remoteAddress: peer,
+        headers: { 'x-forwarded-for': '198.51.100.7' } });
+      expect(response.json()).toEqual({ ip: '198.51.100.7' });
+    } finally { await app.close(); }
+  });
+
+  it.each(['true', 'false', '1', 'loopback', 'uniquelocal', '0.0.0.0/0', '::/0', '10.0.0.1/33', '::1/129',
+    '10.0.0.1/-1', '10.0.0.1/24.5', '10.0.0.1/', '10.0.0.1/24/3', '10.0.0.8,'])('rejects unsafe proxy configuration %s', (value) => {
+    expect(() => buildConfig({ TRUSTED_PROXY_IPS: value })).toThrow('TRUSTED_PROXY_IPS');
   });
 });

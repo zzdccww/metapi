@@ -50,6 +50,7 @@ services:
       TZ: ${TZ:-Asia/Shanghai}
       NOTIFY_COOLDOWN_SEC: ${NOTIFY_COOLDOWN_SEC:-300}
       ADMIN_IP_ALLOWLIST: "${ADMIN_IP_ALLOWLIST:-}"
+      TRUSTED_PROXY_IPS: "${TRUSTED_PROXY_IPS:-}"
       SYSTEM_PROXY_URL: "${SYSTEM_PROXY_URL:-}"
       # Required only when using Gemini CLI OAuth.
       GEMINI_CLI_CLIENT_ID: "${GEMINI_CLI_CLIENT_ID:-}"
@@ -82,7 +83,7 @@ docker compose up -d
 
 > [!TIP]
 > 初始管理员令牌就是启动时配置的 `AUTH_TOKEN`。  
-> 如果未显式设置（非 Compose 场景），默认值为 `change-me-admin-token`（仅建议本地调试）。  
+> 生产服务必须使用非默认管理员令牌，数据库已保存的非默认令牌也有效。`change-me-admin-token` 仅允许用于绑定 `127.0.0.1` 或 `::1` 的桌面版和本地调试。
 > 若你在后台「设置」里修改过管理员令牌，后续登录请使用新令牌。
 
 ## 方式二：桌面版启动（Windows / macOS / Linux）
@@ -102,12 +103,12 @@ Linux 安装包选择建议：
 | 项目 | 说明 |
 |------|------|
 | 管理界面 | 应用启动后会直接打开桌面窗口，不需要假设固定的 `http://localhost:4000` |
-| 本地后端地址 | 桌面版内置服务默认监听 `0.0.0.0:4000`；桌面窗口和本机 curl 可继续使用 `http://127.0.0.1:4000`，局域网其他设备请使用当前机器的实际 IP + `4000`；如需改端口，可显式设置 `METAPI_DESKTOP_SERVER_PORT` |
+| 本地后端地址 | 桌面版内置服务默认监听 `127.0.0.1:4000`；如需局域网访问，先设置非默认管理员令牌，再显式设置 `HOST=0.0.0.0`；如需改端口，可设置 `METAPI_DESKTOP_SERVER_PORT` |
 | 数据目录 | 保存在 `app.getPath('userData')/data`，不是仓库里的 `./data` |
 | 日志目录 | 保存在 `app.getPath('userData')/logs`；托盘菜单提供 `Open Logs Folder` |
 
 > [!IMPORTANT]
-> 桌面版首次启动时，如果你没有额外注入 `AUTH_TOKEN`，默认管理员令牌就是 `change-me-admin-token`。
+> 桌面版首次启动未注入 `AUTH_TOKEN` 时，可在默认回环监听地址使用 `change-me-admin-token`；外部监听地址不允许使用此默认值。
 > 首次登录后建议立即到「设置」里改成你自己的强密码令牌。
 
 > [!TIP]
@@ -298,7 +299,7 @@ curl -sS http://127.0.0.1:4000/v1/models \
 
 如果你显式设置了 `METAPI_DESKTOP_SERVER_PORT`，再把上面的 `4000` 替换成日志里的实际端口。返回正常响应，说明代理链路已经可用。
 
-如果你要从同一局域网的其他设备访问桌面版，把上面的 `127.0.0.1` 替换成这台电脑的实际局域网 IP，并确认系统防火墙已放行对应端口。
+如果你要从同一局域网的其他设备访问桌面版，先设置非默认管理员令牌并显式配置 `HOST=0.0.0.0`，再把上面的 `127.0.0.1` 替换成这台电脑的实际局域网 IP，并确认系统防火墙已放行对应端口。
 
 ## 下一步
 

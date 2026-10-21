@@ -181,6 +181,7 @@ services:
       TZ: ${TZ:-Asia/Shanghai}
       NOTIFY_COOLDOWN_SEC: ${NOTIFY_COOLDOWN_SEC:-300}
       ADMIN_IP_ALLOWLIST: "${ADMIN_IP_ALLOWLIST:-}"
+      TRUSTED_PROXY_IPS: "${TRUSTED_PROXY_IPS:-}"
       SYSTEM_PROXY_URL: "${SYSTEM_PROXY_URL:-}"
       GEMINI_CLI_CLIENT_ID: "${GEMINI_CLI_CLIENT_ID:-}"
       GEMINI_CLI_CLIENT_SECRET: "${GEMINI_CLI_CLIENT_SECRET:-}"
@@ -242,8 +243,8 @@ Switch at any time: click "旧版参照界面" at the bottom of the left sidebar
 
 > [!TIP]
 > The initial admin token is the `AUTH_TOKEN` configured at startup.
-> If running outside Compose without explicitly setting `AUTH_TOKEN`, the default is `change-me-admin-token` (for local debugging only).
-> The desktop installer falls into this category on first launch too: if you do not inject `AUTH_TOKEN`, the default admin token is also `change-me-admin-token`.
+> Production requires a non-default administrator token; a non-default token already saved in the database also works. `change-me-admin-token` is allowed only for desktop/local development bound to `127.0.0.1` or `::1`.
+> Desktop now binds to `127.0.0.1` by default. For LAN access, configure a non-default token and explicitly set `HOST=0.0.0.0`. Declare actual reverse proxy IPs/CIDRs with `TRUSTED_PROXY_IPS`; see [configuration](docs/configuration.md).
 > If you change the admin token in the Settings panel, use the new token for subsequent logins.
 
 **Desktop app**: download Windows / macOS / Linux installers from [Releases](https://github.com/yswlww/metapi-evolution/releases) — ready out of the box, with a data directory independent from Docker deployments.

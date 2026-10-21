@@ -8,6 +8,7 @@ import {
   config,
 } from './config.js';
 import { registerAdminRouteGuard } from './middleware/adminRouteGuard.js';
+import { assertSafeAdminCredentials } from './shared/adminCredentials.js';
 import { createGlobalRateLimitHook, registerGlobalRateLimit } from './middleware/globalRateLimit.js';
 import { registerRetiredMonitorRouteGuard } from './retiredMonitorRouteGuard.js';
 import { sitesRoutes } from './routes/api/sites.js';
@@ -200,6 +201,8 @@ try {
 } catch (error) {
   console.warn(`Failed to load runtime settings overrides: ${(error as Error)?.message || 'unknown error'}`);
 }
+
+assertSafeAdminCredentials(config);
 
 await ensureOauthProviderSitesExist();
 

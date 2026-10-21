@@ -335,9 +335,36 @@ describe('settings and auth events', () => {
 
     expect(response.statusCode).toBe(200);
     const body = response.json() as { currentAdminIp?: string; serverTimeZone?: string };
-    expect(body.currentAdminIp).toBe('203.0.113.5');
+    expect(body.currentAdminIp).toBe('10.0.0.8');
     expect(typeof body.serverTimeZone).toBe('string');
     expect((body.serverTimeZone || '').length).toBeGreaterThan(0);
+  });
+
+  it('uses the trusted proxy resolution for IP display and allowlist validation', async () => {
+    const { buildConfig, buildFastifyOptions } = await import('../../config.js');
+    const { settingsRoutes } = await import('./settings.js');
+    const trustedApp = Fastify({ ...buildFastifyOptions(buildConfig({ TRUSTED_PROXY_IPS: '10.0.0.8' })), logger: false });
+    await trustedApp.register(settingsRoutes);
+    try {
+      const headers = { 'x-forwarded-for': '198.51.100.7, 203.0.113.5' };
+      const display = await trustedApp.inject({ url: '/api/settings/runtime', remoteAddress: '10.0.0.8', headers });
+      expect(display.json().currentAdminIp).toBe('203.0.113.5');
+      const rejected = await trustedApp.inject({ method: 'PUT', url: '/api/settings/runtime', remoteAddress: '10.0.0.8', headers,
+        payload: { adminIpAllowlist: ['198.51.100.7'] } });
+      expect(rejected.statusCode).toBe(400);
+      expect(rejected.json().message).toContain('203.0.113.5');
+      const accepted = await trustedApp.inject({ method: 'PUT', url: '/api/settings/runtime', remoteAddress: '10.0.0.8', headers,
+        payload: { adminIpAllowlist: ['203.0.113.5'] } });
+      expect(accepted.statusCode).toBe(200);
+    } finally { await trustedApp.close(); }
+  });
+
+  it('does not accept a forged forwarded IP as the current address when updating the allowlist', async () => {
+    const response = await app.inject({ method: 'PUT', url: '/api/settings/runtime',
+      headers: { 'x-forwarded-for': '198.51.100.7' }, payload: { adminIpAllowlist: ['198.51.100.7'] } });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().message).toContain('127.0.0.1');
+    expect(await db.select().from(schema.settings).where(eq(schema.settings.key, 'admin_ip_allowlist')).get()).toBeFalsy();
   });
 
   it('rejects proxy token that does not start with sk-', async () => {

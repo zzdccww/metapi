@@ -19,7 +19,8 @@ export function isRetiredMonitorPath(url: string): boolean {
 }
 
 async function retiredMonitorRouteGuard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  if (!isRetiredMonitorPath(request.url)) return;
+  const routeUrl = request.routeOptions.url ?? request.url;
+  if (!isRetiredMonitorPath(routeUrl) && !isRetiredMonitorPath(request.url)) return;
 
   reply.code(404).send({ error: 'Not found' });
 }

@@ -33,7 +33,7 @@ function delay(ms: number) {
 }
 
 export function buildDesktopServerEnv(input: DesktopServerEnvInput): NodeJS.ProcessEnv {
-  const host = (input.inheritedEnv?.HOST || '0.0.0.0').trim() || '0.0.0.0';
+  const host = (input.inheritedEnv?.HOST || '127.0.0.1').trim() || '127.0.0.1';
 
   return {
     ...(input.inheritedEnv || {}),

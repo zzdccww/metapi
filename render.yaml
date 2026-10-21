@@ -9,6 +9,8 @@ services:
     envVars:
       - key: AUTH_TOKEN
         sync: false
+      - key: TRUSTED_PROXY_IPS
+        sync: false
       - key: PROXY_TOKEN
         sync: false
       - key: GEMINI_CLI_CLIENT_ID

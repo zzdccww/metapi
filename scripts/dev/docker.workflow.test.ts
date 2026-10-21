@@ -18,6 +18,7 @@ const expectedComposeVariables = [
   'PORT',
   'NOTIFY_COOLDOWN_SEC',
   'ADMIN_IP_ALLOWLIST',
+  'TRUSTED_PROXY_IPS',
   'SYSTEM_PROXY_URL',
   'TELEGRAM_ENABLED',
   'TELEGRAM_BOT_TOKEN',
@@ -40,6 +41,7 @@ const expectedComposeMappings = [
   'TZ: ${TZ:-Asia/Shanghai}',
   'NOTIFY_COOLDOWN_SEC: ${NOTIFY_COOLDOWN_SEC:-300}',
   'ADMIN_IP_ALLOWLIST: "${ADMIN_IP_ALLOWLIST:-}"',
+  'TRUSTED_PROXY_IPS: "${TRUSTED_PROXY_IPS:-}"',
   'SYSTEM_PROXY_URL: "${SYSTEM_PROXY_URL:-}"',
   'TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-false}',
   'TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"',
@@ -135,6 +137,14 @@ describe('docker workflows', () => {
     expect(branchWorkflow).toContain("- 'src/**'");
     expect(branchWorkflow).toContain("- 'New metapi Evolution Webui/metapi/**'");
     expect(branchWorkflow).toContain('platforms: linux/amd64');
+  });
+
+  it('exposes explicit proxy trust in hosted deployment templates', () => {
+    const render = readFileSync(resolve(process.cwd(), 'render.yaml'), 'utf8').replaceAll('\r\n', '\n');
+    const zeabur = readFileSync(resolve(process.cwd(), 'zeabur-template.yaml'), 'utf8').replaceAll('\r\n', '\n');
+    expect(render).toContain('- key: TRUSTED_PROXY_IPS\n        sync: false');
+    expect(zeabur).toContain('- key: TRUSTED_PROXY_IPS');
+    expect(zeabur).toContain('TRUSTED_PROXY_IPS:\n            default: ${TRUSTED_PROXY_IPS}');
   });
 
   it('forwards Google OAuth variables through hosted deployment templates without defaults', () => {

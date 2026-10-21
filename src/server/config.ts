@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import type { FastifyServerOptions } from 'fastify';
+import { isIP } from 'node:net';
+import { DEFAULT_ADMIN_TOKEN } from './shared/adminCredentials.js';
 import { normalizePayloadRulesConfig } from './services/payloadRules.js';
 
 const DEFAULT_REQUEST_BODY_LIMIT = 20 * 1024 * 1024;
@@ -76,6 +78,20 @@ function parseListenHost(env: NodeJS.ProcessEnv): string {
   return (env.HOST || '0.0.0.0').trim() || '0.0.0.0';
 }
 
+function parseTrustedProxyIps(value: string | undefined): string[] {
+  if (!value?.trim()) return [];
+  const entries = value.split(',').map((entry) => entry.trim());
+  for (const entry of entries) {
+    const [address, prefix, extra] = entry.split('/');
+    const family = isIP(address);
+    if (!family || extra !== undefined || (prefix !== undefined
+      && (!/^\d+$/.test(prefix) || Number(prefix) < 1 || Number(prefix) > (family === 4 ? 32 : 128)))) {
+      throw new Error(`Invalid TRUSTED_PROXY_IPS entry: ${entry || '(empty)'}. Use explicit IP addresses or non-universal CIDRs`);
+    }
+  }
+  return [...new Set(entries)];
+}
+
 export function buildConfig(env: NodeJS.ProcessEnv) {
   const dataDir = env.DATA_DIR || './data';
   const proxySiteConcurrencyLeaseTtlMs = parseIntegerInRange(
@@ -92,7 +108,10 @@ export function buildConfig(env: NodeJS.ProcessEnv) {
   );
 
   return {
-    authToken: env.AUTH_TOKEN || 'change-me-admin-token',
+    authToken: env.AUTH_TOKEN ?? DEFAULT_ADMIN_TOKEN,
+    nodeEnv: env.NODE_ENV || 'development',
+    isDesktop: env.METAPI_DESKTOP === '1',
+    trustedProxyIps: parseTrustedProxyIps(env.TRUSTED_PROXY_IPS),
     proxyToken: env.PROXY_TOKEN || 'change-me-proxy-sk-token',
     deployHelperToken: parseOptionalSecret(env.DEPLOY_HELPER_TOKEN || env.UPDATE_CENTER_HELPER_TOKEN),
     codexClientId: parseOptionalSecret(env.CODEX_CLIENT_ID) || DEFAULT_CODEX_CLIENT_ID,
@@ -223,7 +242,7 @@ export function buildFastifyOptions(
 ): FastifyServerOptions {
   return {
     logger: true,
-    trustProxy: true,
+    trustProxy: appConfig.trustedProxyIps.length > 0 ? appConfig.trustedProxyIps : false,
     bodyLimit: appConfig.requestBodyLimit,
   };
 }

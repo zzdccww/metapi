@@ -4,6 +4,8 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { createRateLimitGuard } from './requestRateLimit.js';
 import { config } from '../config.js';
+import { normalizeClientIp as normalizeIp } from '../shared/clientIp.js';
+import { parseAdminBearerToken, timingSafeTokenEqual } from '../shared/adminCredentials.js';
 import { ADMIN_AUTH_FAILURE_HEADER } from '../shared/adminAuthFailure.js';
 import {
   authorizeDownstreamToken,
@@ -118,14 +120,6 @@ type ParsedAllowlistEntry =
   | { kind: 'exact'; normalizedIp: string }
   | { kind: 'cidr'; network: number; mask: number };
 
-function normalizeIp(rawIp: string | null | undefined): string {
-  const ip = (rawIp || '').trim();
-  if (!ip) return '';
-  if (ip.startsWith('::ffff:')) return ip.slice('::ffff:'.length).trim();
-  if (ip === '::1') return '127.0.0.1';
-  return ip;
-}
-
 function parseIpv4Value(rawIp: string): number | null {
   const normalizedIp = normalizeIp(rawIp);
   if (isIP(normalizedIp) !== 4) return null;
@@ -174,18 +168,6 @@ export function findInvalidIpAllowlistEntries(allowlist: string[]): string[] {
   return allowlist.filter((item) => parseAllowlistEntry(item) === null);
 }
 
-export function extractClientIp(remoteIp: string | null | undefined, xForwardedFor?: string | string[] | undefined): string {
-  if (Array.isArray(xForwardedFor)) {
-    const first = xForwardedFor.find((item) => item && item.trim().length > 0);
-    if (first) {
-      return normalizeIp(first.split(',')[0]);
-    }
-  } else if (typeof xForwardedFor === 'string' && xForwardedFor.trim().length > 0) {
-    return normalizeIp(xForwardedFor.split(',')[0]);
-  }
-  return normalizeIp(remoteIp);
-}
-
 export function isIpAllowed(clientIp: string, allowlist: string[]): boolean {
   if (!allowlist || allowlist.length === 0) return true;
   const normalizedClientIp = normalizeIp(clientIp);
@@ -202,7 +184,7 @@ export function isIpAllowed(clientIp: string, allowlist: string[]): boolean {
 }
 
 export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
-  const clientIp = extractClientIp(request.ip, request.headers['x-forwarded-for']);
+  const clientIp = normalizeIp(request.ip);
   if (!isIpAllowed(clientIp, config.adminIpAllowlist)) {
     reply.header(ADMIN_AUTH_FAILURE_HEADER, '1').code(403).send({ error: 'IP not allowed' });
     return;
@@ -213,8 +195,8 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
     reply.header(ADMIN_AUTH_FAILURE_HEADER, '1').code(401).send({ error: 'Missing Authorization header' });
     return;
   }
-  const token = auth.replace('Bearer ', '');
-  if (token !== config.authToken) {
+  const token = parseAdminBearerToken(auth);
+  if (token === null || !timingSafeTokenEqual(token, config.authToken)) {
     reply.header(ADMIN_AUTH_FAILURE_HEADER, '1').code(403).send({ error: 'Invalid token' });
     return;
   }

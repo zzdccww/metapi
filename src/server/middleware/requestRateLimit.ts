@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { normalizeClientIp } from '../shared/clientIp.js';
 
 type RateLimitOptions = {
   bucket: string;
@@ -27,28 +28,6 @@ type RateLimitEntry = {
 
 const DEFAULT_MESSAGE = '请求过于频繁，请稍后再试';
 const rateLimitStore = new Map<string, RateLimitEntry>();
-
-function normalizeIp(rawIp: string | null | undefined): string {
-  const ip = (rawIp || '').trim();
-  if (!ip) return 'unknown';
-  if (ip.startsWith('::ffff:')) return ip.slice('::ffff:'.length).trim() || 'unknown';
-  if (ip === '::1') return '127.0.0.1';
-  return ip;
-}
-
-function extractClientIp(request: FastifyRequest): string {
-  const forwarded = request.headers['x-forwarded-for'];
-  if (Array.isArray(forwarded)) {
-    const first = forwarded.find((value) => typeof value === 'string' && value.trim().length > 0);
-    if (first) return normalizeIp(first.split(',')[0]);
-  }
-
-  if (typeof forwarded === 'string' && forwarded.trim().length > 0) {
-    return normalizeIp(forwarded.split(',')[0]);
-  }
-
-  return normalizeIp(request.ip);
-}
 
 function pruneExpiredEntries(nowMs: number): void {
   for (const [key, entry] of rateLimitStore.entries()) {
@@ -94,7 +73,7 @@ export function createRateLimitGuard(options: RateLimitOptions) {
   return async function rateLimitGuard(request: FastifyRequest, reply: FastifyReply) {
     const identity = options.keyGenerator
       ? String(options.keyGenerator(request) || 'unknown')
-      : extractClientIp(request);
+      : normalizeClientIp(request.ip) || 'unknown';
     const result = consumeRateLimit({
       bucket: options.bucket,
       identity,

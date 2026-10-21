@@ -69,6 +69,27 @@ describe('request rate-limit guard', () => {
     expect(blocked?.retryAfterSec).toBeGreaterThanOrEqual(1);
   });
 
+  it('does not let direct clients rotate the default IP bucket with forged forwarding headers', async () => {
+    const app = Fastify();
+    app.get('/limited', { preHandler: [createRateLimitGuard({ bucket: 'resolved-ip', max: 1, windowMs: 60000 })] }, async () => ({ ok: true }));
+    try {
+      expect((await app.inject({ url: '/limited', headers: { 'x-forwarded-for': '198.51.100.1' } })).statusCode).toBe(200);
+      expect((await app.inject({ url: '/limited', headers: { 'x-forwarded-for': '198.51.100.2' } })).statusCode).toBe(429);
+      expect((await app.inject({ url: '/limited', remoteAddress: '203.0.113.5' })).statusCode).toBe(200);
+    } finally { await app.close(); }
+  });
+
+  it('uses the resolved client behind explicitly trusted proxies for the default IP bucket', async () => {
+    const app = Fastify({ trustProxy: ['10.0.0.8'] });
+    app.get('/limited', { preHandler: [createRateLimitGuard({ bucket: 'trusted-resolved-ip', max: 1, windowMs: 60000 })] }, async () => ({ ok: true }));
+    try {
+      const request = (forwarded: string) => app.inject({ url: '/limited', remoteAddress: '10.0.0.8', headers: { 'x-forwarded-for': forwarded } });
+      expect((await request('198.51.100.7, 203.0.113.5')).statusCode).toBe(200);
+      expect((await request('198.51.100.8, 203.0.113.5')).statusCode).toBe(429);
+      expect((await request('203.0.113.6')).statusCode).toBe(200);
+    } finally { await app.close(); }
+  });
+
   it('does not alias bucket and identity values containing delimiters', () => {
     const consumeRateLimit = (requestRateLimit as typeof requestRateLimit & {
       consumeRateLimit: (options: {

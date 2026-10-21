@@ -40,7 +40,7 @@ function toStringList(value: unknown): string[] {
 
 export function applyRuntimeSettings(settingsMap: Map<string, string>) {
   const authToken = parseSettingFromMap<string>(settingsMap, 'auth_token');
-  if (typeof authToken === 'string' && authToken) config.authToken = authToken;
+  if (typeof authToken === 'string') config.authToken = authToken;
 
   const proxyToken = parseSettingFromMap<string>(settingsMap, 'proxy_token');
   if (typeof proxyToken === 'string' && proxyToken) config.proxyToken = proxyToken;

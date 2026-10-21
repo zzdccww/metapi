@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { db, schema } from '../../db/index.js';
 import { config } from '../../config.js';
+import { assertSafeAdminCredentials, timingSafeTokenEqual } from '../../shared/adminCredentials.js';
 import { eq } from 'drizzle-orm';
 import { formatUtcSqlDateTime } from '../../services/localTimeService.js';
 import { createRateLimitGuard } from '../../middleware/requestRateLimit.js';
@@ -33,8 +34,14 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(400).send({ success: false, message: '新 Token 至少 6 个字符' });
     }
 
-    if (oldToken !== config.authToken) {
+    if (!timingSafeTokenEqual(oldToken, config.authToken)) {
       return reply.code(403).send({ success: false, message: '旧 Token 验证失败' });
+    }
+
+    try {
+      assertSafeAdminCredentials({ ...config, authToken: newToken });
+    } catch {
+      return reply.code(400).send({ success: false, message: '管理员 Token 不能包含空白或逗号，当前部署也必须符合默认 Token 使用限制' });
     }
 
     // Save to settings table

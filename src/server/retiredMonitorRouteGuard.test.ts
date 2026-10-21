@@ -95,6 +95,31 @@ describe('retired monitor route guard in production ordering', () => {
   });
 
   it.each([
+    ['/%61pi/monitor/config', '/api/monitor/config'],
+    ['/api/%6Donitor/%73ession?source=test', '/api/monitor/session'],
+    ['/%6Donitor-proxy/ldoh/api/status', '/monitor-proxy/ldoh/api/status'],
+  ])('blocks encoded matched retired route %s before its handler', async (url, route) => {
+    app = Fastify();
+    registerRetiredMonitorRouteGuard(app);
+    const handler = vi.fn(async () => ({ shouldNotRun: true }));
+    app.get(route, handler);
+    const response = await app.inject({ url });
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: 'Not found' });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('retains raw retired namespace rejection when a wildcard matches', async () => {
+    app = Fastify();
+    registerRetiredMonitorRouteGuard(app);
+    const handler = vi.fn(async () => ({ shouldNotRun: true }));
+    app.get('/*', handler);
+    expect((await app.inject({ url: '/monitor-proxy/retired-child' })).statusCode).toBe(404);
+    expect(handler).not.toHaveBeenCalled();
+    expect((await app.inject({ url: '/monitor-proxyx/neighbor' })).statusCode).toBe(200);
+  });
+
+  it.each([
     '/monitor-proxyx',
     '/monitor-proxyx?source=test',
     '/monitor-proxy-ish/path',

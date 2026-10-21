@@ -9,7 +9,7 @@ import {
 } from './runtime.js';
 
 describe('desktop runtime helpers', () => {
-  it('builds desktop server env with external listen host, app version, and app directories', () => {
+  it('builds desktop server env with loopback listen host, app version, and app directories', () => {
     const env = buildDesktopServerEnv({
       inheritedEnv: {
         AUTH_TOKEN: 'admin-token',
@@ -21,13 +21,20 @@ describe('desktop runtime helpers', () => {
       appVersion: '9.8.7',
     });
 
-    expect(env.HOST).toBe('0.0.0.0');
+    expect(env.HOST).toBe('127.0.0.1');
     expect(env.PORT).toBe('4312');
     expect(env.DATA_DIR).toBe('/tmp/metapi-data');
     expect(env.METAPI_LOG_DIR).toBe('/tmp/metapi-logs');
     expect(env.METAPI_APP_VERSION).toBe('9.8.7');
     expect(env.AUTH_TOKEN).toBe('admin-token');
     expect(env.PROXY_TOKEN).toBe('proxy-token');
+  });
+
+  it('retains an explicit external bind for configured desktop deployments', () => {
+    const env = buildDesktopServerEnv({ inheritedEnv: { HOST: '0.0.0.0', AUTH_TOKEN: 'private-admin' },
+      userDataDir: '/tmp/data', logsDir: '/tmp/logs', port: 4000 });
+    expect(env.HOST).toBe('0.0.0.0');
+    expect(env.AUTH_TOKEN).toBe('private-admin');
   });
 
   it('creates the browser URL from the local desktop port', () => {

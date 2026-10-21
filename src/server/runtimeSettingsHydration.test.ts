@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { config } from './config.js';
 import { applyRuntimeSettings } from './runtimeSettingsHydration.js';
+import { assertSafeAdminCredentials, DEFAULT_ADMIN_TOKEN } from './shared/adminCredentials.js';
 
 const originalConfig = structuredClone(config);
 
@@ -10,6 +11,16 @@ afterEach(() => {
 });
 
 describe('applyRuntimeSettings', () => {
+  it('validates effective saved credentials after hydration instead of requiring AUTH_TOKEN', () => {
+    Object.assign(config, { authToken: DEFAULT_ADMIN_TOKEN, nodeEnv: 'production', isDesktop: false, listenHost: '0.0.0.0' });
+    expect(() => assertSafeAdminCredentials(config)).toThrow('non-default');
+    applyRuntimeSettings(new Map([['auth_token', JSON.stringify('persisted-private-token')]]));
+    expect(() => assertSafeAdminCredentials(config)).not.toThrow();
+    for (const savedToken of ['', '   ']) {
+      applyRuntimeSettings(new Map([['auth_token', JSON.stringify(savedToken)]]));
+      expect(() => assertSafeAdminCredentials(config)).toThrow('blank');
+    }
+  });
   it('hydrates persisted runtime settings that should survive restarts', () => {
     config.disableCrossProtocolFallback = false;
     config.responsesCompactFallbackToResponsesEnabled = false;

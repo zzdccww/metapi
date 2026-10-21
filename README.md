@@ -201,6 +201,7 @@ services:
       TZ: ${TZ:-Asia/Shanghai}
       NOTIFY_COOLDOWN_SEC: ${NOTIFY_COOLDOWN_SEC:-300}
       ADMIN_IP_ALLOWLIST: "${ADMIN_IP_ALLOWLIST:-}"
+      TRUSTED_PROXY_IPS: "${TRUSTED_PROXY_IPS:-}"
       SYSTEM_PROXY_URL: "${SYSTEM_PROXY_URL:-}"
       GEMINI_CLI_CLIENT_ID: "${GEMINI_CLI_CLIENT_ID:-}"
       GEMINI_CLI_CLIENT_SECRET: "${GEMINI_CLI_CLIENT_SECRET:-}"
@@ -262,8 +263,8 @@ docker run -d --name metapi \
 
 > [!TIP]
 > 初始管理员令牌即启动时配置的 `AUTH_TOKEN`。
-> 若在 Compose 外运行且未显式设置 `AUTH_TOKEN`，默认为 `change-me-admin-token`（仅用于本地调试）。
-> 桌面安装包首次启动也属于这类场景：如果你没有额外注入 `AUTH_TOKEN`，默认管理员令牌同样是 `change-me-admin-token`。
+> 生产服务必须配置非默认管理员令牌；数据库中已保存的非默认令牌同样有效。默认值 `change-me-admin-token` 仅允许用于绑定 `127.0.0.1` 或 `::1` 的桌面版和本地调试。
+> 桌面首次启动默认绑定 `127.0.0.1`。如需局域网访问，请先设置非默认令牌，再显式配置 `HOST=0.0.0.0`。反向代理请通过 `TRUSTED_PROXY_IPS` 声明其实际 IP/CIDR，详见[配置说明](docs/configuration.md)。
 > 如果在「设置」面板中修改了管理员令牌，后续登录请使用新令牌。
 
 **桌面版**：从 [Releases](https://github.com/yswlww/metapi-evolution/releases) 下载 Windows / macOS / Linux 安装包，开箱即用，数据目录与 Docker 版互不影响。

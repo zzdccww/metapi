@@ -34,6 +34,10 @@ spec:
       type: STRING
       name: Proxy Token
       description: Bearer token used by downstream clients.
+    - key: TRUSTED_PROXY_IPS
+      type: STRING
+      name: Trusted Proxy IPs
+      description: Optional comma-separated proxy IPs/CIDRs; leave blank for direct clients.
     - key: GEMINI_CLI_CLIENT_ID
       type: STRING
       name: Gemini CLI OAuth Client ID
@@ -78,6 +82,9 @@ spec:
             expose: false
           PROXY_TOKEN:
             default: ${PROXY_TOKEN}
+            expose: false
+          TRUSTED_PROXY_IPS:
+            default: ${TRUSTED_PROXY_IPS}
             expose: false
           GEMINI_CLI_CLIENT_ID:
             default: ${GEMINI_CLI_CLIENT_ID}

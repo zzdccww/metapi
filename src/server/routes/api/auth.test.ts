@@ -12,6 +12,7 @@ describe('auth routes', () => {
   let app: FastifyInstance;
   let db: DbModule['db'];
   let schema: DbModule['schema'];
+  let closeDbConnections: DbModule['closeDbConnections'];
   let config: ConfigModule['config'];
   let dataDir = '';
   let originalDataDir: string | undefined;
@@ -28,6 +29,7 @@ describe('auth routes', () => {
     const routesModule = await import('./auth.js');
     db = dbModule.db;
     schema = dbModule.schema;
+    closeDbConnections = dbModule.closeDbConnections;
     config = configModule.config;
     originalAuthToken = config.authToken;
 
@@ -36,6 +38,7 @@ describe('auth routes', () => {
   });
 
   beforeEach(async () => {
+    resetRequestRateLimitStore();
     config.authToken = 'secret-token';
     await db.delete(schema.events).run();
     await db.delete(schema.settings).run();
@@ -44,6 +47,7 @@ describe('auth routes', () => {
   afterAll(async () => {
     config.authToken = originalAuthToken;
     await app.close();
+    await closeDbConnections();
     if (originalDataDir === undefined) delete process.env.DATA_DIR;
     else process.env.DATA_DIR = originalDataDir;
   });
@@ -63,6 +67,43 @@ describe('auth routes', () => {
       success: false,
       message: 'Invalid newToken. Expected string.',
     });
+  });
+
+  it.each(['short', 'secret-tokeN', 'secret-token-extra', ''])('rejects incorrect old credential %j during rotation', async (oldToken) => {
+    const response = await app.inject({ method: 'POST', url: '/api/settings/auth/change', payload: { oldToken, newToken: 'rotated-private-token' } });
+    expect(response.statusCode).toBe(oldToken ? 403 : 400);
+    expect(config.authToken).toBe('secret-token');
+    expect(await db.select().from(schema.settings).get()).toBeUndefined();
+  });
+
+  it('updates the current token without a stale comparison cache', async () => {
+    const response = await app.inject({ method: 'POST', url: '/api/settings/auth/change',
+      payload: { oldToken: 'secret-token', newToken: 'rotated-private-token' } });
+    expect(response.statusCode).toBe(200);
+    const { authMiddleware } = await import('../../middleware/auth.js');
+    const protectedApp = Fastify();
+    protectedApp.addHook('onRequest', authMiddleware);
+    protectedApp.get('/api/protected', async () => ({ ok: true }));
+    try {
+      expect((await protectedApp.inject({ url: '/api/protected', headers: { authorization: 'Bearer secret-token' } })).statusCode).toBe(403);
+      expect((await protectedApp.inject({ url: '/api/protected', headers: { authorization: 'Bearer rotated-private-token' } })).statusCode).toBe(200);
+    } finally { await protectedApp.close(); }
+  });
+
+  it('rejects rotation back to the default token on an exposed service', async () => {
+    const response = await app.inject({ method: 'POST', url: '/api/settings/auth/change',
+      payload: { oldToken: 'secret-token', newToken: 'change-me-admin-token' } });
+    expect(response.statusCode).toBe(400);
+    expect(config.authToken).toBe('secret-token');
+  });
+
+  it.each(['white space-token', 'comma,token', 'tab\ttoken', '      '])('rejects unusable new credential %j without persisting it', async (newToken) => {
+    const response = await app.inject({ method: 'POST', url: '/api/settings/auth/change',
+      payload: { oldToken: 'secret-token', newToken } });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().message).toContain('空白或逗号');
+    expect(config.authToken).toBe('secret-token');
+    expect(await db.select().from(schema.settings).get()).toBeUndefined();
   });
 
   it('rate limits authenticated admin requests independently of forwarded IP', async () => {
