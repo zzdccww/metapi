@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
-- **Last Active**: 2026-10-21
+- **Total Sessions**: 8
+- **Last Active**: 2026-11-12
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~203 | Active |
+| `journal-1.md` | ~243 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-11-12 | Remove node:vm challenge script execution (upstream v1.3.1 parity) | `55ff0f7` | `metapi-evolution` |
 | 7 | 2026-10-21 | Restore original UI and retain security repairs | `64e2f47` | `metapi-evolution` |
 | 6 | 2026-10-21 | Administrator authentication hardening | `63eba8c` | `metapi-evolution` |
 | 5 | 2026-10-21 | Sync upstream Evolution UI and security patches | `5398f46` | `metapi-evolution` |

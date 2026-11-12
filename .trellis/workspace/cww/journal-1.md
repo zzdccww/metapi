@@ -201,3 +201,43 @@ Recovered session 01a15b96 and completed the approved rollback of incomplete Evo
 ### Next Steps
 
 - After authorization, push rollback, verify Linux image and deploy to Northflank; production still runs integrated UI.
+
+
+## Session 8: Remove node:vm challenge script execution (upstream v1.3.1 parity)
+<!-- trellis-session: v=2 fp=3bd22974bfda361d -->
+
+**Date**: 2026-11-12
+**Task**: Remove node:vm challenge script execution (upstream v1.3.1 parity)
+**Branch**: `metapi-evolution`
+
+### Summary
+
+Replaced node:vm execution of upstream challenge script with upstream v1.3.1 data-only parser, removed the duplicated parsers in newApi.ts, made the ban executable in the drift checker, and recorded the contract as a backend spec. A 64 KB size guard was implemented then withdrawn at user review for strict upstream parity, so the measured quadratic regex DoS ships unmitigated as separate work.
+
+### Main Changes
+
+- newApiShield.ts: data-only parser. Case-swapped base64 string table decoded via Buffer.from; XOR seed accepted only when exactly one decoded entry matches arg1 length and hex shape, else fail closed with one warning. node:vm import deleted.
+- newApi.ts: three private parsers plus the inline solver deleted (-73 lines); solveAcwScV2 now delegates to the shared solveNewApiAcwScV2, so NewApi and AnyRouter share one implementation.
+- repo-drift-check.ts: new no-node-vm-execution rule over src/server non-test source, matching static, dynamic and require forms in both bare and node:-prefixed spellings; does not match same-named transformer helpers.
+- New spec .trellis/spec/backend/upstream-response-safety.md plus index row; new test newApiShield.test.ts with 5 tests that mock node:vm and inject a host-realm escape marker.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `55ff0f7` | fix: parse new-api challenge pages as data instead of node:vm script |
+
+### Testing
+
+- [OK] typecheck:server, 4 focused test files / 35 tests, repo:drift-check with Violations: 0, and build:server all exit 0; dist/server carries the new parser and zero node:vm references.
+- [OK] Negative control: reverting both sources fails all 5 tests, including expected true to be undefined for the host-realm marker, reproducing the RCE from the suite itself.
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- Rebuild and redeploy the image before trusting the fix: docker/Dockerfile rebuilds dist from source, so running deployments stay vulnerable until then.
+- Separate task for the unbounded quadratic regex cost in newApiShield.ts; upstream v1.3.1 has the same weakness, so fixing it means diverging deliberately.
+- No push performed; branch is ahead of origin/metapi-evolution by three commits and needs authorization.
