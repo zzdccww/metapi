@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Check the slice against the repo quality bar and drift-check ratchet"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"Verify fail-closed behavior and that no error path still reaches a vm call"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"Verify any warning is content-free and uses the sanctioned logging shape"}
+{"file":".trellis/tasks/11-12-remove-node-vm-challenge-execution/research/vm-exposure-audit.md","reason":"Re-check every reported finding: both sinks removed, DoS path gone, reachability unchanged"}
+{"file":".trellis/tasks/11-12-remove-node-vm-challenge-execution/research/upstream-v131-parity.md","reason":"Confirm the fix matches the upstream contract and that out-of-scope findings stayed out"}

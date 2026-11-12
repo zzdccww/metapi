@@ -47,6 +47,29 @@ describe('repo drift check', () => {
     ]));
   });
 
+  it('flags node:vm imports in server source but not in tests or same-named helpers', () => {
+    const root = mkdtempSync(join(tmpdir(), 'metapi-repo-drift-vm-'));
+    writeWorkspaceFiles(root, {
+      'src/server/services/platforms/staticImport.ts': "import { createContext, runInContext } from 'node:vm';\n",
+      'src/server/services/platforms/dynamicImport.ts': "const vm = await import('node:vm');\n",
+      'src/server/services/platforms/bareRequire.ts': "const vm = require('vm');\n",
+      // Tests may import or mock node:vm to prove production code never reaches it.
+      'src/server/services/platforms/mocked.test.ts': "import { createContext } from 'node:vm';\nvi.mock('node:vm', () => ({}));\n",
+      // Unrelated helpers that merely share the vm API's function names.
+      'src/server/transformers/openai/chat/streamBridge.ts': 'export function createContext() { return {}; }\nexport function runInContext() { return null; }\n',
+    });
+
+    const report = runRepoDriftCheck({ root });
+    const vmFindings = report.violations.filter((finding) => finding.ruleId === 'no-node-vm-execution');
+
+    expect(vmFindings.map((finding) => finding.file).sort()).toEqual([
+      'src/server/services/platforms/bareRequire.ts',
+      'src/server/services/platforms/dynamicImport.ts',
+      'src/server/services/platforms/staticImport.ts',
+    ]);
+    expect(report.trackedDebt.filter((finding) => finding.ruleId === 'no-node-vm-execution')).toEqual([]);
+  });
+
   it('keeps the current repository within the first-wave ratchet', () => {
     const report = runRepoDriftCheck({ root: process.cwd() });
     expect(report.violations).toEqual([]);

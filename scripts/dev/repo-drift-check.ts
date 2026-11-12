@@ -101,8 +101,22 @@ function isTopLevelPageFile(file: string): boolean {
     && isNonTestSource(file);
 }
 
+// Matches static imports, dynamic imports and require() of the vm module in
+// either the bare or node:-prefixed form. Deliberately does not match the
+// createContext / runInContext identifiers: unrelated modules under
+// src/server/transformers/** legitimately define functions with those names.
+const VM_MODULE_SPECIFIER_PATTERN = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)['"](?:node:)?vm['"]|\bimport\s+['"](?:node:)?vm['"]/;
+
 function createRules(): RuleSpec[] {
   return [
+    {
+      id: 'no-node-vm-execution',
+      description: 'Server code must not execute untrusted input through node:vm',
+      fileFilter: (file) => file.startsWith('src/server/')
+        && isNonTestSource(file),
+      lineMatch: (line) => VM_MODULE_SPECIFIER_PATTERN.test(line),
+      message: 'server module imports node:vm; node:vm is not a sandbox, parse untrusted input as data instead',
+    },
     {
       id: 'transformers-route-blind',
       description: 'Transformers must not import route-layer proxy helpers',
